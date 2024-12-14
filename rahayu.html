@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our Love Story</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Prevent scrolling */
+    html,
+    body {
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+
+    .transform-style-3d {
+      transform-style: preserve-3d;
+    }
+
+    .backface-hidden {
+      backface-visibility: hidden;
+    }
+
+    .book-container {
+      position: relative;
+      width: 100%;
+      height: 600px;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+
+    .book-open {
+      transform: rotateY(-180deg);
+    }
+
+    .page {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.4s;
+      transform-style: preserve-3d;
+      transform-origin: left center;
+    }
+
+    .page.flipped {
+      transform: rotateY(-180deg);
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    .heart-icon {
+      animation: pulse 1.5s infinite;
+    }
+
+    /* Style for the background images */
+    .background-img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    /* Style for the small images */
+    .small-image {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      pointer-events: none;
+      transition: transform 0.3s ease-in-out;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-pink-100 to-purple-100">
+
+  <!-- Audio element for autoplay and looping -->
+  <audio id="audio" autoplay loop hidden>
+    <source src="jadi-kekasihku-saja.mp3" type="audio/mp3">
+    Your browser does not support the audio element.
+  </audio>
+
+  <script>
+    const audio = document.getElementById('audio');
+
+    // Ensure the audio restarts from where it left off after page reload
+    const savedTime = localStorage.getItem('audioTime');
+    if (savedTime) {
+      audio.currentTime = parseFloat(savedTime);
+    }
+
+    // Save the current time of the audio every 5 seconds
+    audio.addEventListener('timeupdate', () => {
+      localStorage.setItem('audioTime', audio.currentTime);
+    });
+  </script>
+
+  <img src="images/foto-1.jpg" alt="Background Image" class="background-img" id="backgroundImg">
+
+  <div id="smallImagesContainer"></div>
+
+  <div class="min-h-screen flex items-center justify-center p-8">
+    <div id="bookContainer" class="relative perspective-1000 w-[400px] transition-all duration-500">
+      <div class="book-container cursor-pointer">
+        <div class="absolute w-full h-[600px] bg-gradient-to-r from-purple-600 to-pink-500 rounded-lg shadow-2xl flex items-center justify-center backface-hidden">
+          <div class="text-white text-center p-8">
+            <div class="heart-icon w-16 h-16 mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-full h-full">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <h1 class="text-3xl font-bold mb-4">Our Love Story</h1>
+            <p class="text-lg">Click to Open</p>
+          </div>
+        </div>
+
+        <div id="pages" class="absolute w-full h-[600px] bg-white rounded-lg shadow-2xl transform rotate-y-180 backface-hidden">
+          <div class="relative w-full h-full p-8">
+            <div id="currentPage">
+              <img src="" alt="Page" class="w-full h-[400px] object-cover rounded-lg mb-4" loading="lazy" style="pointer-events: none;">
+              <p class="text-center text-xl font-serif text-gray-700 italic"></p>
+            </div>
+
+            <div class="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
+              <button id="prevBtn" class="px-4 py-2 rounded-full bg-purple-500 text-white hover:bg-purple-600 transition-colors">
+                Previous
+              </button>
+              <button id="nextBtn" class="px-4 py-2 rounded-full bg-pink-500 text-white hover:bg-pink-600 transition-colors">
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const pages = [{
+        image: "images/foto-1.jpg",
+        text: "Cinta katakan cinta"
+      },
+      {
+        image: "images/foto-2.jpg",
+        text: "Hati ini meminta"
+      },
+      {
+        image: "images/foto-3.jpg",
+        text: "Kau lebih dari teman berbagi"
+      },
+      {
+        image: "images/foto-4.jpg",
+        text: "Jadi kekasihku saja"
+      },
+    ];
+
+    let isOpen = false;
+    let currentPageIndex = 0;
+
+    const bookContainer = document.querySelector('.book-container');
+    const container = document.getElementById('bookContainer');
+    const currentPageImg = document.querySelector('#currentPage img');
+    const currentPageText = document.querySelector('#currentPage p');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    // Function to generate random small images
+    function generateSmallImages() {
+      const smallImagesContainer = document.getElementById('smallImagesContainer');
+      const totalImages = 30; // Number of small images
+      const imageUrl = 'images/foto-1.jpg'; // Image URL for the small images
+
+      for (let i = 0; i < totalImages; i++) {
+        const smallImage = document.createElement('img');
+        smallImage.src = imageUrl;
+        smallImage.alt = 'Small Image';
+        smallImage.classList.add('small-image');
+
+        // Random position
+        smallImage.style.top = `${Math.random() * 100}vh`;
+        smallImage.style.left = `${Math.random() * 100}vw`;
+
+        // Random rotation (between -20 and 20 degrees)
+        const rotationDegree = (Math.random() - 0.5) * 40;
+        smallImage.style.transform = `rotate(${rotationDegree}deg)`;
+
+        smallImagesContainer.appendChild(smallImage);
+      }
+    }
+
+    function updatePage() {
+      currentPageImg.src = pages[currentPageIndex].image;
+      currentPageText.textContent = pages[currentPageIndex].text;
+
+      prevBtn.disabled = currentPageIndex === 0;
+      nextBtn.disabled = currentPageIndex === pages.length - 1;
+
+      prevBtn.style.opacity = currentPageIndex === 0 ? '0.5' : '1';
+      nextBtn.style.opacity = currentPageIndex === pages.length - 1 ? '0.5' : '1';
+    }
+
+    bookContainer.addEventListener('click', () => {
+      if (!isOpen) {
+        isOpen = true;
+        bookContainer.classList.add('book-open');
+        container.classList.remove('w-[400px]');
+        container.classList.add('w-[800px]');
+        updatePage();
+      }
+    });
+
+    prevBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (currentPageIndex > 0) {
+        currentPageIndex--;
+        updatePage();
+      }
+    });
+
+    nextBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (currentPageIndex < pages.length - 1) {
+        currentPageIndex++;
+        updatePage();
+      }
+    });
+
+    // Call the function to generate small images on page load
+    generateSmallImages();
+
+    updatePage();
+  </script>
+</body>
+
+</html>
